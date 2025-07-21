@@ -1,15 +1,16 @@
-// Users for login
 const users = [
   { username: 'callan.jackson', password: 'Mabelcat1CC!!', name: 'Mr Callan Jackson', role: 'slt' },
   { username: 'bob', password: 'admin456', name: 'Bob', role: 'slt' }
 ];
 
-const periods = ["Form", "Period 1", "Period 2", "Break", "Period 3", "Period 4", "Lunch", "Period 5"];
-const claims = JSON.parse(localStorage.getItem('claims') || '[]');
+// Simulated sessions and claims (localStorage-backed)
 let sessions = JSON.parse(localStorage.getItem('sessions') || '[]');
-const user = JSON.parse(localStorage.getItem('user') || 'null');
+let claims = JSON.parse(localStorage.getItem('claims') || '[]');
+let user = JSON.parse(localStorage.getItem('user') || 'null');
+let activeClaim = {};
+let claimType = null;
 
-// Login
+// Login handler
 function login() {
   const usernameInput = document.getElementById('username').value.trim();
   const passwordInput = document.getElementById('password').value;
@@ -27,99 +28,158 @@ function login() {
   window.location.href = 'home.html';
 }
 
+// Welcome message
+function showWelcome() {
+  if (!user) return (window.location.href = 'login.html');
+  document.getElementById('welcome-msg').innerText = `Hello ${user.name} (${user.role})`;
+
+  if (user.role !== 'slt') {
+    const adminLink = document.getElementById('admin-link');
+    if (adminLink) adminLink.style.display = 'none';
+  }
+}
+
 // Logout
 function logout() {
   localStorage.removeItem('user');
   window.location.href = 'login.html';
 }
 
-// Show welcome
-function showWelcome() {
-  if (!user) return window.location.href = 'login.html';
-  document.getElementById('welcome-msg').innerText = `Hello ${user.name} (${user.role})`;
-  if (user.role !== 'slt') document.getElementById('admin-link').style.display = 'none';
-}
+// ----------------- CLAIMING ------------------
 
-// Admin session creation
-function createSession() {
-  const date = document.getElementById('session-date').value;
-  if (!date) return alert('Enter a date');
-  sessions.push({ id: Date.now(), date, periods });
-  localStorage.setItem('sessions', JSON.stringify(sessions));
-  renderSessionList();
-}
-
-function renderSessionList() {
-  const ul = document.getElementById('session-list');
-  if (!ul) return;
-  ul.innerHTML = '';
-  sessions.forEach(s => {
-    const li = document.createElement('li');
-    li.innerText = s.date;
-    ul.appendChild(li);
-  });
-}
-
-// Claim page
-function loadSessionsForClaim() {
+function renderSessions() {
   const select = document.getElementById('session-select');
-  if (!select) return;
-  select.innerHTML = '';
-  sessions.forEach(s => {
-    const opt = document.createElement('option');
-    opt.value = s.id;
-    opt.innerText = s.date;
-    select.appendChild(opt);
+  select.innerHTML = '<option disabled selected>Select session</option>';
+  sessions.forEach((s, i) => {
+    const option = document.createElement('option');
+    option.value = i;
+    option.textContent = `${s.day} @ ${s.time}`;
+    select.appendChild(option);
   });
-  renderPeriods();
 }
 
 function renderPeriods() {
-  const sessionId = document.getElementById('session-select').value;
-  const session = sessions.find(s => s.id == sessionId);
+  const selected = document.getElementById('session-select').value;
+  if (selected === '' || selected === undefined) return;
+
   const container = document.getElementById('periods-container');
   container.innerHTML = '';
-  if (!session) return;
-  session.periods.forEach(period => {
+  const periods = [
+    'Form', 'Period 1', 'Period 2', 'Break', 'Period 3',
+    'Period 4', 'Lunch', 'Period 5'
+  ];
+
+  periods.forEach(p => {
     const btn = document.createElement('button');
-    btn.innerText = `Claim ${period}`;
-    btn.onclick = () => openModal(session.id, period);
+    btn.textContent = `${p} – CLAIM`;
+    btn.onclick = () => openModal(parseInt(selected), p);
     container.appendChild(btn);
   });
+
+  // Add Cafeteria, Food Truck, Detention Duty (special rules)
+  ['Cafeteria', 'Food Truck'].forEach(p => {
+    const btn = document.createElement('button');
+    btn.textContent = `${p} – CLAIM (Break/Lunch Only)`;
+    btn.onclick = () => openModal(parseInt(selected), p);
+    container.appendChild(btn);
+  });
+
+  const detentionBtn = document.createElement('button');
+  detentionBtn.textContent = 'Detention Duty – CLAIM (Lunch Only)';
+  detentionBtn.onclick = () => openModal(parseInt(selected), 'Detention Duty');
+  container.appendChild(detentionBtn);
 }
 
-let activeClaim = {};
+// Modal open
 function openModal(sessionId, period) {
   activeClaim = { sessionId, period };
+  claimType = null;
+
   document.getElementById('claim-popup').classList.remove('hidden');
+  document.getElementById('teaching-form').classList.add('hidden');
+  document.getElementById('admin-form').classList.add('hidden');
 }
 
+// Modal close
 function closeModal() {
   document.getElementById('claim-popup').classList.add('hidden');
 }
 
+// Modal: show teaching form
+function showTeachingForm() {
+  claimType = 'teaching';
+  document.getElementById('teaching-form').classList.remove('hidden');
+  document.getElementById('admin-form').classList.add('hidden');
+}
+
+// Modal: show admin form
+function showAdminForm() {
+  claimType = 'admin';
+  document.getElementById('admin-form').classList.remove('hidden');
+  document.getElementById('teaching-form').classList.add('hidden');
+}
+
+// Modal: confirm
 function confirmClaim() {
-  const room = document.getElementById('room').value;
-  const subject = document.getElementById('subject').value;
-  const year = document.getElementById('year').value;
-  claims.push({
+  if (!claimType) return alert('Please select a claim type first.');
+
+  let claimData = {
     ...activeClaim,
     user: user.name,
-    room,
-    subject,
-    year
-  });
+    role: user.role,
+    type: claimType
+  };
+
+  if (claimType === 'teaching') {
+    claimData.year = document.getElementById('year').value;
+    claimData.room = document.getElementById('room').value;
+    claimData.department = document.getElementById('department').value;
+    claimData.subject = document.getElementById('subject').value;
+  } else if (claimType === 'admin') {
+    claimData.duty = document.getElementById('admin-duty').value;
+  }
+
+  claims.push(claimData);
   localStorage.setItem('claims', JSON.stringify(claims));
-  alert(`Claimed ${activeClaim.period} for ${subject} in ${room}`);
+  alert('Claim submitted successfully!');
   closeModal();
 }
 
-// Protect pages and render on load
+// ----------------- ADMIN ------------------
+
+function renderSessionList() {
+  const list = document.getElementById('session-list');
+  list.innerHTML = '';
+
+  sessions.forEach((s, i) => {
+    const li = document.createElement('li');
+    li.textContent = `Session ${i + 1}: ${s.day} @ ${s.time}`;
+    list.appendChild(li);
+  });
+}
+
+function createSession() {
+  const day = document.getElementById('session-day').value;
+  const time = document.getElementById('session-time').value;
+  if (!day || !time) return alert('Fill all session fields');
+  sessions.push({ day, time });
+  localStorage.setItem('sessions', JSON.stringify(sessions));
+  renderSessionList();
+  alert('Session created!');
+}
+
+// ----------------- INIT ------------------
+
 document.addEventListener('DOMContentLoaded', () => {
-  if (window.location.pathname.includes('home')) showWelcome();
-  if (window.location.pathname.includes('admin')) {
-    if (!user || user.role !== 'slt') window.location.href = 'login.html';
+  const path = window.location.pathname;
+
+  if (path.includes('home.html')) showWelcome();
+  if (path.includes('claim.html')) {
+    if (!user) return (window.location.href = 'login.html');
+    renderSessions();
+  }
+  if (path.includes('admin.html')) {
+    if (!user || user.role !== 'slt') return (window.location.href = 'login.html');
     renderSessionList();
   }
-  if (window.location.pathname.includes('claim')) loadSessionsForClaim();
 });
