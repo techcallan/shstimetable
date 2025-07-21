@@ -1,28 +1,46 @@
+// Users for login
+const users = [
+  { username: 'callan.jackson', password: 'Mabelcat1CC!!', name: 'Mr Callan Jackson', role: 'slt' },
+  { username: 'bob', password: 'admin456', name: 'Bob', role: 'slt' }
+];
+
 const periods = ["Form", "Period 1", "Period 2", "Break", "Period 3", "Period 4", "Lunch", "Period 5"];
 const claims = JSON.parse(localStorage.getItem('claims') || '[]');
 let sessions = JSON.parse(localStorage.getItem('sessions') || '[]');
 const user = JSON.parse(localStorage.getItem('user') || 'null');
 
+// Login
 function login() {
-  const name = document.getElementById('username').value;
-  const role = document.getElementById('role').value;
-  if (!name) return alert('Please enter your name');
-  const user = { name, role };
-  localStorage.setItem('user', JSON.stringify(user));
+  const usernameInput = document.getElementById('username').value.trim();
+  const passwordInput = document.getElementById('password').value;
+
+  const found = users.find(
+    u => u.username === usernameInput && u.password === passwordInput
+  );
+
+  if (!found) {
+    alert('Invalid credentials');
+    return;
+  }
+
+  localStorage.setItem('user', JSON.stringify(found));
   window.location.href = 'home.html';
 }
 
+// Logout
 function logout() {
   localStorage.removeItem('user');
   window.location.href = 'login.html';
 }
 
+// Show welcome
 function showWelcome() {
   if (!user) return window.location.href = 'login.html';
   document.getElementById('welcome-msg').innerText = `Hello ${user.name} (${user.role})`;
   if (user.role !== 'slt') document.getElementById('admin-link').style.display = 'none';
 }
 
+// Admin session creation
 function createSession() {
   const date = document.getElementById('session-date').value;
   if (!date) return alert('Enter a date');
@@ -33,6 +51,7 @@ function createSession() {
 
 function renderSessionList() {
   const ul = document.getElementById('session-list');
+  if (!ul) return;
   ul.innerHTML = '';
   sessions.forEach(s => {
     const li = document.createElement('li');
@@ -41,8 +60,10 @@ function renderSessionList() {
   });
 }
 
+// Claim page
 function loadSessionsForClaim() {
   const select = document.getElementById('session-select');
+  if (!select) return;
   select.innerHTML = '';
   sessions.forEach(s => {
     const opt = document.createElement('option');
@@ -93,9 +114,12 @@ function confirmClaim() {
   closeModal();
 }
 
-// Auto-run on page load
+// Protect pages and render on load
 document.addEventListener('DOMContentLoaded', () => {
-  if (document.getElementById('welcome-msg')) showWelcome();
-  if (document.getElementById('session-list')) renderSessionList();
-  if (document.getElementById('session-select')) loadSessionsForClaim();
+  if (window.location.pathname.includes('home')) showWelcome();
+  if (window.location.pathname.includes('admin')) {
+    if (!user || user.role !== 'slt') window.location.href = 'login.html';
+    renderSessionList();
+  }
+  if (window.location.pathname.includes('claim')) loadSessionsForClaim();
 });
