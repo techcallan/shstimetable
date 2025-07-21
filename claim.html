@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Claim a Period</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="container">
+    <h1>Claim Period</h1>
+    <label for="session">Select Session:</label>
+    <select id="session-select" onchange="renderPeriods()"></select>
+
+    <div id="periods-container"></div>
+
+    <div id="claim-popup" class="modal hidden">
+      <div class="modal-content">
+        <span class="close" onclick="closeModal()">&times;</span>
+        <h3>Claim Period</h3>
+        <label>Room:</label>
+        <select id="room">
+          <option>Isolation</option>
+          <option>Pastoral Base</option>
+          <option>Cafeteria</option>
+          <option>Food Truck</option>
+        </select>
+        <label>Subject:</label>
+        <select id="subject">
+          <option>English</option><option>Science</option><option>PE</option><option>Drama</option>
+        </select>
+        <label>Year:</label>
+        <select id="year">
+          <option>Year 7</option><option>Year 8</option><option>Year 9</option>
+          <option>Year 10</option><option>Year 11</option>
+          <option>Sixth Form</option><option>Learning Support</option><option>Behaviour Support</option>
+        </select>
+        <button onclick="confirmClaim()">Confirm</button>
+      </div>
+    </div>
+
+    <a href="home.html">Back to Home</a>
+  </div>
+  <script src="app.js"></script>
+</body>
+</html>
