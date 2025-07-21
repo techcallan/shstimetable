@@ -1,43 +1,70 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>School Period Claiming</title>
+  <meta charset="UTF-8">
+  <title>School Claiming System</title>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <h1>Period Claiming System</h1>
+  <div id="login-page" class="container">
+    <h1>Login</h1>
+    <input type="text" id="username" placeholder="Name" />
+    <select id="role">
+      <option value="staff">Staff</option>
+      <option value="slt">Senior Leadership</option>
+    </select>
+    <button onclick="login()">Login</button>
+  </div>
 
-  <div id="year-group">
-    <h2>Year 7</h2>
-    <div class="grid">
-      <!-- Auto-generated period buttons will go here -->
+  <div id="dashboard" class="container hidden">
+    <h1 id="welcome"></h1>
+    <button onclick="logout()">Logout</button>
+
+    <div id="slt-panel" class="hidden">
+      <h2>Create Session</h2>
+      <input type="date" id="session-date">
+      <button onclick="createSession()">Create Session</button>
+    </div>
+
+    <div id="claim-panel">
+      <h2>Claim a Period</h2>
+      <label for="session-select">Select Session:</label>
+      <select id="session-select" onchange="loadPeriods()"></select>
+
+      <div id="periods-container"></div>
     </div>
   </div>
 
-  <div id="claim-popup" class="modal hidden">
+  <div id="modal" class="modal hidden">
     <div class="modal-content">
       <span class="close" onclick="closeModal()">&times;</span>
       <h3>Claim Period</h3>
-
-      <label for="room">Room:</label>
-      <select id="room">
-        <option>Cafeteria</option>
-        <option>Food Truck</option>
+      <label>Room:</label>
+      <select id="claim-room">
         <option>Pastoral Base</option>
         <option>Isolation</option>
+        <option>Cafeteria</option>
+        <option>Food Truck</option>
       </select>
-
-      <label for="subject">Subject:</label>
-      <select id="subject">
+      <label>Subject:</label>
+      <select id="claim-subject">
         <option>English</option>
-        <option>History</option>
         <option>Science</option>
         <option>Drama</option>
+        <option>PE</option>
       </select>
-
-      <button onclick="confirmClaim()">Confirm Claim</button>
+      <label>Year:</label>
+      <select id="claim-year">
+        <option>Year 7</option>
+        <option>Year 8</option>
+        <option>Year 9</option>
+        <option>Year 10</option>
+        <option>Year 11</option>
+        <option>Sixth Form</option>
+        <option>Learning Support</option>
+        <option>Behaviour Support</option>
+      </select>
+      <button onclick="confirmClaim()">Confirm</button>
     </div>
   </div>
 
