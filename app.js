@@ -1,185 +1,140 @@
-const users = [
-  { username: 'callan.jackson', password: 'Mabelcat1CC!!', name: 'Mr Callan Jackson', role: 'slt' },
-  { username: 'bob', password: 'admin456', name: 'Bob', role: 'slt' }
+// Define all periods and available rooms (from your room list)
+const periods = ["Form", "Period 1", "Period 2", "Break", "Period 3", "Period 4", "Lunch", "Period 5"];
+const rooms = [
+  "C1", "C2", "C3", "L1", "L2", "L3", "S1", "S2", "S3", "PE Hall", "Drama Studio",
+  "Comp1", "Comp2", "H1", "H2", "G1", "G2", "MFL1", "MFL2", "BS1", "BS2", "English Hub"
 ];
 
-// Simulated sessions and claims (localStorage-backed)
-let sessions = JSON.parse(localStorage.getItem('sessions') || '[]');
-let claims = JSON.parse(localStorage.getItem('claims') || '[]');
-let user = JSON.parse(localStorage.getItem('user') || 'null');
-let activeClaim = {};
-let claimType = null;
+// Teaching departments
+const departments = [
+  "English", "History", "Geography", "Science", "Business",
+  "Computing Science", "Physical Education", "Drama", "Modern Languages"
+];
 
-// Login handler
-function login() {
-  const usernameInput = document.getElementById('username').value.trim();
-  const passwordInput = document.getElementById('password').value;
+// Student year groups
+const years = [
+  "Year 7", "Year 8", "Year 9", "Year 10", "Year 11",
+  "Sixth Form", "Learning Support", "Behaviour Support"
+];
 
-  const found = users.find(
-    u => u.username === usernameInput && u.password === passwordInput
-  );
+// Admin tasks (some restricted to specific periods)
+const adminDuties = [
+  "On-Call", "Isolation", "Pastoral Base", "Detention Duty",
+  "Cafeteria", "Food Truck"
+];
 
-  if (!found) {
-    alert('Invalid credentials');
-    return;
-  }
+let claims = JSON.parse(localStorage.getItem("claims") || "[]");
+let selectedPeriod = "";
 
-  localStorage.setItem('user', JSON.stringify(found));
-  window.location.href = 'home.html';
-}
-
-// Welcome message
-function showWelcome() {
-  if (!user) return (window.location.href = 'login.html');
-  document.getElementById('welcome-msg').innerText = `Hello ${user.name} (${user.role})`;
-
-  if (user.role !== 'slt') {
-    const adminLink = document.getElementById('admin-link');
-    if (adminLink) adminLink.style.display = 'none';
-  }
-}
-
-// Logout
-function logout() {
-  localStorage.removeItem('user');
-  window.location.href = 'login.html';
-}
-
-// ----------------- CLAIMING ------------------
-
-function renderSessions() {
-  const select = document.getElementById('session-select');
-  select.innerHTML = '<option disabled selected>Select session</option>';
-  sessions.forEach((s, i) => {
-    const option = document.createElement('option');
-    option.value = i;
-    option.textContent = `${s.day} @ ${s.time}`;
-    select.appendChild(option);
-  });
-}
-
-function renderPeriods() {
-  const selected = document.getElementById('session-select').value;
-  if (selected === '' || selected === undefined) return;
-
-  const container = document.getElementById('periods-container');
-  container.innerHTML = '';
-  const periods = [
-    'Form', 'Period 1', 'Period 2', 'Break', 'Period 3',
-    'Period 4', 'Lunch', 'Period 5'
-  ];
+// Render the timetable grid
+function buildTimetable() {
+  const table = document.getElementById("timetable");
 
   periods.forEach(p => {
-    const btn = document.createElement('button');
-    btn.textContent = `${p} – CLAIM`;
-    btn.onclick = () => openModal(parseInt(selected), p);
-    container.appendChild(btn);
+    const cell = document.createElement("div");
+    cell.className = "period-cell";
+    cell.innerHTML = `
+      <h3>${p}</h3>
+      <button onclick="openClaim('${p}')">Claim</button>
+    `;
+    table.appendChild(cell);
   });
 
-  // Add Cafeteria, Food Truck, Detention Duty (special rules)
-  ['Cafeteria', 'Food Truck'].forEach(p => {
-    const btn = document.createElement('button');
-    btn.textContent = `${p} – CLAIM (Break/Lunch Only)`;
-    btn.onclick = () => openModal(parseInt(selected), p);
-    container.appendChild(btn);
+  // Populate dynamic dropdowns
+  const roomSelect = document.getElementById("room");
+  rooms.forEach(room => {
+    const opt = document.createElement("option");
+    opt.textContent = room;
+    roomSelect.appendChild(opt);
   });
 
-  const detentionBtn = document.createElement('button');
-  detentionBtn.textContent = 'Detention Duty – CLAIM (Lunch Only)';
-  detentionBtn.onclick = () => openModal(parseInt(selected), 'Detention Duty');
-  container.appendChild(detentionBtn);
+  const yearSelect = document.getElementById("year");
+  years.forEach(y => {
+    const opt = document.createElement("option");
+    opt.textContent = y;
+    yearSelect.appendChild(opt);
+  });
+
+  const departmentSelect = document.getElementById("department");
+  departments.forEach(d => {
+    const opt = document.createElement("option");
+    opt.textContent = d;
+    departmentSelect.appendChild(opt);
+  });
+
+  const adminSelect = document.getElementById("admin-duty");
+  adminDuties.forEach(d => {
+    const opt = document.createElement("option");
+    opt.textContent = d;
+    adminSelect.appendChild(opt);
+  });
 }
 
-// Modal open
-function openModal(sessionId, period) {
-  activeClaim = { sessionId, period };
-  claimType = null;
-
-  document.getElementById('claim-popup').classList.remove('hidden');
-  document.getElementById('teaching-form').classList.add('hidden');
-  document.getElementById('admin-form').classList.add('hidden');
+// Open claim modal
+function openClaim(period) {
+  selectedPeriod = period;
+  document.getElementById("modal-info").textContent = `Claiming: ${period}`;
+  document.getElementById("claim-modal").classList.remove("hidden");
+  document.getElementById("teaching-form").classList.add("hidden");
+  document.getElementById("admin-form").classList.add("hidden");
+  document.getElementById("claim-modal").dataset.type = "";
 }
 
-// Modal close
+// Close modal
 function closeModal() {
-  document.getElementById('claim-popup').classList.add('hidden');
+  document.getElementById("claim-modal").classList.add("hidden");
+  document.getElementById("teaching-form").classList.add("hidden");
+  document.getElementById("admin-form").classList.add("hidden");
+  document.getElementById("claim-modal").dataset.type = "";
 }
 
-// Modal: show teaching form
-function showTeachingForm() {
-  claimType = 'teaching';
-  document.getElementById('teaching-form').classList.remove('hidden');
-  document.getElementById('admin-form').classList.add('hidden');
+// User chooses period type
+function chooseType(type) {
+  document.getElementById("claim-modal").dataset.type = type;
+
+  if (type === "teaching") {
+    document.getElementById("teaching-form").classList.remove("hidden");
+    document.getElementById("admin-form").classList.add("hidden");
+  } else {
+    document.getElementById("admin-form").classList.remove("hidden");
+    document.getElementById("teaching-form").classList.add("hidden");
+  }
 }
 
-// Modal: show admin form
-function showAdminForm() {
-  claimType = 'admin';
-  document.getElementById('admin-form').classList.remove('hidden');
-  document.getElementById('teaching-form').classList.add('hidden');
-}
+// Submit claim
+function submitClaim() {
+  const type = document.getElementById("claim-modal").dataset.type;
+  if (!type) return alert("Please choose a period type first.");
 
-// Modal: confirm
-function confirmClaim() {
-  if (!claimType) return alert('Please select a claim type first.');
-
-  let claimData = {
-    ...activeClaim,
-    user: user.name,
-    role: user.role,
-    type: claimType
+  const claim = {
+    period: selectedPeriod,
+    type,
+    user: JSON.parse(localStorage.getItem("user") || "{}").username || "Unknown",
+    timestamp: new Date().toISOString()
   };
 
-  if (claimType === 'teaching') {
-    claimData.year = document.getElementById('year').value;
-    claimData.room = document.getElementById('room').value;
-    claimData.department = document.getElementById('department').value;
-    claimData.subject = document.getElementById('subject').value;
-  } else if (claimType === 'admin') {
-    claimData.duty = document.getElementById('admin-duty').value;
+  if (type === "teaching") {
+    claim.year = document.getElementById("year").value;
+    claim.room = document.getElementById("room").value;
+    claim.department = document.getElementById("department").value;
+    claim.subject = document.getElementById("subject").value;
+  } else {
+    claim.duty = document.getElementById("admin-duty").value;
+
+    // Validate restrictions
+    const p = selectedPeriod.toLowerCase();
+    if (
+      claim.duty === "Detention Duty" && p !== "lunch" ||
+      (["Cafeteria", "Food Truck"].includes(claim.duty) && !["lunch", "break"].includes(p))
+    ) {
+      return alert(`${claim.duty} can only be claimed at valid periods.`);
+    }
   }
 
-  claims.push(claimData);
-  localStorage.setItem('claims', JSON.stringify(claims));
-  alert('Claim submitted successfully!');
+  claims.push(claim);
+  localStorage.setItem("claims", JSON.stringify(claims));
+  alert("Claim submitted.");
   closeModal();
 }
 
-// ----------------- ADMIN ------------------
-
-function renderSessionList() {
-  const list = document.getElementById('session-list');
-  list.innerHTML = '';
-
-  sessions.forEach((s, i) => {
-    const li = document.createElement('li');
-    li.textContent = `Session ${i + 1}: ${s.day} @ ${s.time}`;
-    list.appendChild(li);
-  });
-}
-
-function createSession() {
-  const day = document.getElementById('session-day').value;
-  const time = document.getElementById('session-time').value;
-  if (!day || !time) return alert('Fill all session fields');
-  sessions.push({ day, time });
-  localStorage.setItem('sessions', JSON.stringify(sessions));
-  renderSessionList();
-  alert('Session created!');
-}
-
-// ----------------- INIT ------------------
-
-document.addEventListener('DOMContentLoaded', () => {
-  const path = window.location.pathname;
-
-  if (path.includes('home.html')) showWelcome();
-  if (path.includes('claim.html')) {
-    if (!user) return (window.location.href = 'login.html');
-    renderSessions();
-  }
-  if (path.includes('admin.html')) {
-    if (!user || user.role !== 'slt') return (window.location.href = 'login.html');
-    renderSessionList();
-  }
-});
+document.addEventListener("DOMContentLoaded", buildTimetable);
