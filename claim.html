@@ -1,73 +1,63 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>Claim a Period</title>
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
   <div class="container">
-    <h1>Claim Period</h1>
-
-    <label for="session">Select Session:</label>
-    <select id="session-select" onchange="renderPeriods()"></select>
-
-    <div id="periods-container"></div>
-
-    <div id="claim-popup" class="modal hidden">
-      <div class="modal-content">
-        <span class="close" onclick="closeModal()">&times;</span>
-        <h3>Choose Claim Type</h3>
-        <button onclick=\"showTeachingForm()\">Teaching Period</button>
-        <button onclick=\"showAdminForm()\">Admin Period</button>
-        
-        <div id=\"teaching-form\" class=\"hidden\">
-          <h4>Teaching Claim</h4>
-          <label>Year:</label>
-          <select id=\"year\">
-            <option>Year 7</option><option>Year 8</option><option>Year 9</option>
-            <option>Year 10</option><option>Year 11</option>
-            <option>Sixth Form</option><option>Learning Support</option><option>Behaviour Support</option>
-          </select>
-
-          <label>Room:</label>
-          <select id=\"room\">
-            <option>C1</option><option>C2</option><option>C3</option>
-            <option>L1</option><option>L2</option>
-            <option>H1</option><option>H2</option><option>H3</option>
-          </select>
-
-          <label>Department:</label>
-          <select id=\"department\">
-            <option>English</option><option>History</option><option>Geography</option>
-            <option>Science</option><option>Business</option><option>Computing Science</option>
-            <option>Physical Education</option><option>Drama</option><option>Modern Languages</option>
-          </select>
-
-          <label>Subject:</label>
-          <input type=\"text\" id=\"subject\" placeholder=\"Enter Subject Name\">
-        </div>
-
-        <div id=\"admin-form\" class=\"hidden\">
-          <h4>Admin Duty</h4>
-          <label>Duty Type:</label>
-          <select id=\"admin-duty\">
-            <option>On-Call</option>
-            <option>Isolation</option>
-            <option>Pastoral Base</option>
-            <option>Detention Duty</option>
-            <option>Cafeteria</option>
-            <option>Food Truck</option>
-          </select>
-        </div>
-
-        <button onclick=\"confirmClaim()\">Confirm</button>
-      </div>
-    </div>
-
-    <a href=\"home.html\">Back to Home</a>
+    <h1>Claim a Period</h1>
+    <div id="timetable" class="grid"></div>
   </div>
-  <script src=\"app.js\"></script>
+
+  <div id="claim-modal" class="modal hidden">
+    <div class="modal-content">
+      <span class="close" onclick="closeModal()">&times;</span>
+      <h2>Claim Period</h2>
+      <p id="modal-info"></p>
+      <div>
+        <button onclick="chooseType('teaching')">Teaching Period</button>
+        <button onclick="chooseType('admin')">Admin Period</button>
+      </div>
+
+      <div id="teaching-form" class="hidden">
+        <label>Year:</label>
+        <select id="year">
+          <option>Year 7</option><option>Year 8</option><option>Year 9</option>
+          <option>Year 10</option><option>Year 11</option>
+          <option>Sixth Form</option><option>Learning Support</option><option>Behaviour Support</option>
+        </select>
+        <label>Room:</label>
+        <select id="room"></select>
+        <label>Department:</label>
+        <select id="department">
+          <option>English</option><option>History</option><option>Geography</option>
+          <option>Science</option><option>Business</option><option>Computing Science</option>
+          <option>Physical Education</option><option>Drama</option><option>Modern Languages</option>
+        </select>
+        <label>Subject:</label>
+        <input type="text" id="subject" />
+      </div>
+
+      <div id="admin-form" class="hidden">
+        <label>Duty:</label>
+        <select id="admin-duty">
+          <option>On-Call</option>
+          <option>Isolation</option>
+          <option>Pastoral Base</option>
+          <option>Detention Duty</option>
+          <option>Cafeteria</option>
+          <option>Food Truck</option>
+        </select>
+      </div>
+
+      <button onclick="submitClaim()">Confirm Claim</button>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
 </body>
 </html>
+
 
